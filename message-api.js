@@ -108,7 +108,15 @@ function deleteMessage(id, pin) {
 }
 
 function getSheet() {
+  // 尝试获取当前绑定的电子表格
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 如果没有绑定的电子表格，创建一个新的
+  if (!ss) {
+    ss = SpreadsheetApp.create('Pixel Message Board Data');
+    Logger.log('Created new spreadsheet: ' + ss.getUrl());
+  }
+  
   var sheet = ss.getSheetByName('Messages');
   
   if (!sheet) {
