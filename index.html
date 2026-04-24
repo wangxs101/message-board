@@ -290,7 +290,7 @@
         </div>
 
         <div class="nav-link">
-            <a href="https://formspree.io/forms/maqaarvn" target="_blank">[ Admin Panel ]</a>
+            <a href="admin.html">[ Admin Panel ]</a>
         </div>
     </div>
 
@@ -299,9 +299,6 @@
     <script>
         // Formspree endpoint
         const FORMSPREE_URL = 'https://formspree.io/f/maqaarvn';
-        
-        // 钉钉机器人 Webhook
-        const DINGTALK_WEBHOOK = 'https://oapi.dingtalk.com/robot/send?access_token=0b0048ad67d76f2546e24c32534694f249c05551fcbed4c7dc8e68edb960727a';
 
         // 生成星空背景
         function createStars() {
@@ -371,9 +368,6 @@
                     document.getElementById('author').value = '';
                     document.getElementById('content').value = '';
                     charCountEl.textContent = '0 / 500';
-                    
-                    // 异步发送钉钉通知（不阻塞 UI）
-                    sendDingTalkNotification(author, content);
                 } else {
                     const data = await resp.json();
                     throw new Error(data.error || 'Failed to send');
@@ -386,35 +380,6 @@
                 btn.textContent = 'Send Message';
             }
         });
-
-        // 发送钉钉通知
-        function sendDingTalkNotification(author, content) {
-            const now = new Date().toLocaleString('zh-CN');
-            const markdownContent = `### 📬 新留言通知\n\n**来自：** ${author}\n\n**留言内容：**\n\n${content}\n\n---\n*${now}*`;
-            
-            const payload = {
-                msgtype: 'markdown',
-                markdown: {
-                    title: '新留言通知',
-                    text: markdownContent
-                }
-            };
-            
-            // 使用 fetch 发送（钉钉 Webhook 支持 CORS）
-            fetch(DINGTALK_WEBHOOK, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            }).then(resp => {
-                if (!resp.ok) {
-                    console.warn('DingTalk notification failed:', resp.status);
-                }
-            }).catch(err => {
-                console.warn('DingTalk notification error:', err);
-            });
-        }
     </script>
 </body>
 </html>
