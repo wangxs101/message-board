@@ -7,6 +7,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;700&display=swap');
 
+        /* 让中文字体与 Press Start 2P 大小一致 */
+        @font-face {
+            font-family: 'Noto Sans SC Fitted';
+            src: local('Noto Sans SC');
+            size-adjust: 130%;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,7 +23,7 @@
         body {
             background: #1a0a2e;
             color: #e0e0ff;
-            font-family: 'Press Start 2P', 'Noto Sans SC', 'Courier New', monospace;
+            font-family: 'Press Start 2P', 'Noto Sans SC Fitted', 'Courier New', monospace;
             font-weight: 700;
             min-height: 100vh;
             padding: 2rem 1rem;
@@ -130,7 +137,7 @@
             background: #1a0a2e;
             border: 3px solid #3b1f7a;
             color: #e0e0ff;
-            font-family: 'Press Start 2P', 'Noto Sans SC', monospace;
+            font-family: 'Press Start 2P', 'Noto Sans SC Fitted', monospace;
             font-weight: 700;
             font-size: 0.65rem;
             padding: 0.75rem;
