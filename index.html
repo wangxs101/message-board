@@ -532,10 +532,6 @@
             // 后台异步提交到 JSONBin（不阻塞 UI）
             (async () => {
                 try {
-                    // 先发送 ntfy.sh 通知（在 JSONBin 之前，确保能发出）
-                    var notifyImg = new Image();
-                    notifyImg.src = 'https://ntfy.sh/wxs-msg-mosaic?title=New+Message&tags=inbox_tray&click=https://wangxs101.github.io/message-board/admin.html';
-
                     const readResp = await fetch(BIN_URL + '/latest', {
                         headers: { 'X-Master-Key': API_KEY }
                     });
@@ -552,6 +548,10 @@
                         },
                         body: JSON.stringify({ messages: messages })
                     });
+
+                    // 发送 ntfy.sh 通知
+                    var notifyImg = new Image();
+                    notifyImg.src = 'https://ntfy.sh/wxs-msg-mosaic?title=New+Message&tags=inbox_tray&click=https://wangxs101.github.io/message-board/admin.html';
                 } catch (err) {
                     console.warn('Background sync failed:', err);
                 }
