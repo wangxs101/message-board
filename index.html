@@ -503,10 +503,6 @@
                 return;
             }
 
-            // 立即显示成功，后台异步提交
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-
             // 先更新本地显示
             const localMsg = {
                 id: Date.now().toString(),
@@ -519,35 +515,35 @@
             document.getElementById('author').value = '';
             document.getElementById('content').value = '';
             charCountEl.textContent = '0 / 500';
+            btn.disabled = false;
+            btn.textContent = 'Send Message';
 
             // 立即刷新列表（显示新留言）
             loadMessages();
 
-            // 后台异步提交到 JSONBin
-            try {
-                const readResp = await fetch(BIN_URL + '/latest', {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                const readData = await readResp.json();
-                const messages = readData.record.messages || [];
+            // 后台异步提交到 JSONBin（不阻塞 UI）
+            (async () => {
+                try {
+                    const readResp = await fetch(BIN_URL + '/latest', {
+                        headers: { 'X-Master-Key': API_KEY }
+                    });
+                    const readData = await readResp.json();
+                    const messages = readData.record.messages || [];
 
-                messages.push(localMsg);
+                    messages.push(localMsg);
 
-                await fetch(BIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
-                    },
-                    body: JSON.stringify({ messages: messages })
-                });
-            } catch (err) {
-                // 后台提交失败不影响用户体验
-                console.warn('Background sync failed:', err);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Send Message';
-            }
+                    await fetch(BIN_URL, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY
+                        },
+                        body: JSON.stringify({ messages: messages })
+                    });
+                } catch (err) {
+                    console.warn('Background sync failed:', err);
+                }
+            })();
         });
 
         // 加载留言
