@@ -389,7 +389,7 @@
                     <textarea id="content" placeholder="Write something to the void..." maxlength="500" required></textarea>
                     <div class="char-count" id="char-count">0 / 500</div>
                 </div>
-                <button type="submit" class="submit-btn" id="submit-btn">Send Message</button>
+                <button type="submit" class="submit-btn" id="submit-btn">Post via GitHub</button>
             </form>
         </div>
 
@@ -413,11 +413,9 @@
         // Configuration - 修改为你的 GitHub 仓库信息
         const CONFIG = {
             owner: 'wangxs101',
-            repo: 'terminal-greeting',
+            repo: 'message-board',
             issueLabel: 'message-board'
         };
-
-        const API_BASE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`;
 
         // 生成星空背景
         function createStars() {
@@ -453,64 +451,31 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // 提交留言
-        document.getElementById('message-form').addEventListener('submit', async (e) => {
+        // 留言提交：跳转到 GitHub 创建 Issue 页面（无需 Token）
+        document.getElementById('message-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const author = document.getElementById('author').value.trim() || 'Anonymous';
             const content = document.getElementById('content').value.trim();
-            const btn = document.getElementById('submit-btn');
 
             if (!content) {
                 showToast('Message cannot be empty!', 'error');
                 return;
             }
 
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
+            const title = encodeURIComponent(`[Message] ${author}`);
+            const body = encodeURIComponent(`**From:** ${author}\n\n${content}\n\n---\n*Submitted from [Pixel Message Board](https://${CONFIG.owner}.github.io/${CONFIG.repo}/)*`);
+            const labels = encodeURIComponent(CONFIG.issueLabel);
 
-            try {
-                // 检查是否配置了 GitHub Token
-                const token = localStorage.getItem('github_token');
-                if (!token) {
-                    // 无 token 时，使用备用方案：通过 GitHub Pages 的静态 JSON 文件
-                    // 这里提示用户配置 token 或者使用其他方式
-                    showToast('Please configure GitHub token first!', 'error');
-                    btn.disabled = false;
-                    btn.textContent = 'Send Message';
-                    return;
-                }
+            const issueUrl = `https://github.com/${CONFIG.owner}/${CONFIG.repo}/issues/new?title=${title}&body=${body}&labels=${labels}`;
+            window.open(issueUrl, '_blank');
 
-                const response = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: `[Message] ${author} - ${new Date().toLocaleString()}`,
-                        body: `**From:** ${author}\n\n${content}`,
-                        labels: [CONFIG.issueLabel]
-                    })
-                });
-
-                if (response.ok) {
-                    showToast('Message sent successfully!', 'success');
-                    document.getElementById('author').value = '';
-                    document.getElementById('content').value = '';
-                    charCountEl.textContent = '0 / 500';
-                    loadMessages();
-                } else {
-                    const err = await response.json();
-                    showToast(err.message || 'Failed to send message', 'error');
-                }
-            } catch (err) {
-                showToast('Network error: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Send Message';
-            }
+            showToast('Redirecting to GitHub...', 'success');
+            document.getElementById('author').value = '';
+            document.getElementById('content').value = '';
+            charCountEl.textContent = '0 / 500';
         });
+
+        const API_BASE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`;
 
         // 加载留言（只读，不需要 token）
         async function loadMessages() {
