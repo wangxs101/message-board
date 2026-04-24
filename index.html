@@ -380,6 +380,13 @@
             word-break: break-all;
         }
 
+        .message-card { display: none; }
+        .messages-section { display: none; }
+        .section-title { display: none; }
+        .empty-state { display: none; }
+        .loading { display: none; }
+        .pixel-divider { display: none; }
+
         @media (max-width: 480px) {
             body {
                 padding: 1rem 0.5rem;
@@ -422,15 +429,6 @@
             4. Set them below:<br>
             <code>const BIN_ID = 'YOUR_BIN_ID';</code><br>
             <code>const API_KEY = 'YOUR_API_KEY';</code>
-        </div>
-
-        <div class="pixel-divider"></div>
-
-        <div class="messages-section">
-            <div class="section-title">~ Recent Messages ~</div>
-            <div id="messages-list">
-                <div class="loading">Loading messages...</div>
-            </div>
         </div>
 
         <div class="nav-link">
@@ -518,8 +516,8 @@
             btn.disabled = false;
             btn.textContent = 'Send Message';
 
-            // 立即刷新列表（显示新留言）
-            loadMessages();
+            // 立即刷新列表
+            // loadMessages(); // 已移除留言展示
 
             // 后台异步提交到 JSONBin（不阻塞 UI）
             (async () => {
@@ -546,79 +544,11 @@
             })();
         });
 
-        // 加载留言
-        async function loadMessages() {
-            const listEl = document.getElementById('messages-list');
-            listEl.innerHTML = '<div class="loading">Loading messages...</div>';
-
-            if (!BIN_ID || !API_KEY) {
-                listEl.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">[ _ ]</span>
-                        Configure BIN_ID and API_KEY to see messages
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                const response = await fetch(BIN_URL + '/latest', {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Master-Key': API_KEY
-                    }
-                });
-
-                const data = await response.json();
-                const messages = (data.record && data.record.messages) ? data.record.messages : [];
-
-                if (messages.length === 0) {
-                    listEl.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">[ _ ]</span>
-                            No messages yet...<br>
-                            Be the first to leave a mark!
-                        </div>
-                    `;
-                    return;
-                }
-
-                // 倒序显示（最新的在前）
-                const reversed = [...messages].reverse().slice(0, 50);
-
-                listEl.innerHTML = reversed.map((msg, idx) => {
-                    const time = new Date(msg.timestamp).toLocaleString('zh-CN', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-
-                    return `
-                        <div class="message-card">
-                            <span class="index-badge">#${reversed.length - idx}</span>
-                            <div class="author">
-                                ${msg.author === 'Anonymous' ? '<span class="anonymous">Anonymous</span>' : escapeHtml(msg.author)}
-                                <span class="time">${time}</span>
-                            </div>
-                            <div class="content">${escapeHtml(msg.content)}</div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (err) {
-                listEl.innerHTML = '<div class="empty-state"><span class="icon">[!]</span>Network error</div>';
-            }
-        }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // 页面加载时获取留言
-        loadMessages();
     </script>
 </body>
 </html>
