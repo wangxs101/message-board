@@ -392,8 +392,17 @@
             const now = new Date().toLocaleString('zh-CN');
             const markdownContent = `### 📬 新留言通知\n\n**来自：** ${author}\n\n**留言内容：**\n\n${content}\n\n---\n*${now}*`;
             
-            // 使用 navigator.sendBeacon 发送（无 CORS 问题，适合后台通知）
-            const payload = JSON.stringify({
+            // 创建隐藏的 form 通过 POST 提交（绕过 CORS 限制）
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = DINGTALK_WEBHOOK;
+            form.target = '_blank';
+            form.style.display = 'none';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'payload';
+            input.value = JSON.stringify({
                 msgtype: 'markdown',
                 markdown: {
                     title: '新留言通知',
@@ -401,9 +410,16 @@
                 }
             });
             
-            // 创建 Blob 并使用 sendBeacon
-            const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon(DINGTALK_WEBHOOK, blob);
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            
+            // 提交后移除 form
+            setTimeout(() => {
+                if (form.parentNode) {
+                    form.parentNode.removeChild(form);
+                }
+            }, 1000);
         }
     </script>
 </body>
