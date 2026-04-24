@@ -29,6 +29,14 @@ function doGet(e) {
     return listMessages();
   }
   
+  if (action === 'add') {
+    return addMessage({
+      author: e.parameter.author || 'Anonymous',
+      content: e.parameter.content || '',
+      timestamp: e.parameter.timestamp || new Date().toISOString()
+    });
+  }
+  
   if (action === 'delete' && e.parameter.id) {
     return deleteMessage(e.parameter.id, e.parameter.pin);
   }

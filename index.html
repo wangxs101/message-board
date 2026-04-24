@@ -501,16 +501,9 @@
             btn.textContent = 'Sending...';
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({
-                        action: 'add',
-                        author: author,
-                        content: content,
-                        timestamp: new Date().toISOString()
-                    })
-                });
+                // 使用 GET 请求 + URL 参数，避免 CORS 问题
+                var params = 'action=add&author=' + encodeURIComponent(author) + '&content=' + encodeURIComponent(content) + '&timestamp=' + encodeURIComponent(new Date().toISOString());
+                var response = await fetch(API_URL + '?' + params);
 
                 const result = await response.json();
 
