@@ -84,7 +84,7 @@ function listMessages() {
 
 function deleteMessage(id, pin) {
   // 简单的 PIN 验证（修改为你自己的 PIN）
-  var ADMIN_PIN = '1234';
+  var ADMIN_PIN = '104675';
   
   if (pin !== ADMIN_PIN) {
     return jsonResponse({ success: false, error: 'Invalid PIN' });
