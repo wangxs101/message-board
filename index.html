@@ -359,6 +359,23 @@
             margin: 2rem 0;
         }
 
+        .setup-notice {
+            background: #1a1a2e;
+            border: 2px dashed #ff6b9d;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.45rem;
+            line-height: 2;
+            color: #ff6b9d;
+        }
+
+        .setup-notice code {
+            background: #0d0521;
+            padding: 0.2rem 0.5rem;
+            color: #00d4ff;
+            word-break: break-all;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 1rem 0.5rem;
@@ -389,8 +406,17 @@
                     <textarea id="content" placeholder="Write something to the void..." maxlength="500" required></textarea>
                     <div class="char-count" id="char-count">0 / 500</div>
                 </div>
-                <button type="submit" class="submit-btn" id="submit-btn">Post via GitHub</button>
+                <button type="submit" class="submit-btn" id="submit-btn">Send Message</button>
             </form>
+        </div>
+
+        <div id="setup-notice" class="setup-notice" style="display:none;">
+            <strong>Setup Required:</strong> Create a free Google Apps Script to store messages.<br>
+            1. Go to <a href="https://script.google.com/" target="_blank" style="color:#00d4ff;">script.google.com</a><br>
+            2. Create new project, paste the code from <code>message-api.js</code><br>
+            3. Deploy as Web App (access: Anyone)<br>
+            4. Copy the Web App URL and set it below:<br>
+            <code>const API_URL = 'YOUR_WEB_APP_URL';</code>
         </div>
 
         <div class="pixel-divider"></div>
@@ -410,12 +436,10 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // Configuration - 修改为你的 GitHub 仓库信息
-        const CONFIG = {
-            owner: 'wangxs101',
-            repo: 'message-board',
-            issueLabel: 'message-board'
-        };
+        // ===== 配置区域 =====
+        // 使用 Google Apps Script 作为免费后端
+        // 首次使用请按页面提示创建 Google Apps Script
+        const API_URL = ''; // 替换为你的 Google Apps Script Web App URL
 
         // 生成星空背景
         function createStars() {
@@ -451,51 +475,85 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // 留言提交：跳转到 GitHub 创建 Issue 页面（无需 Token）
-        document.getElementById('message-form').addEventListener('submit', (e) => {
+        // 显示设置提示
+        if (!API_URL) {
+            document.getElementById('setup-notice').style.display = 'block';
+        }
+
+        // 提交留言
+        document.getElementById('message-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const author = document.getElementById('author').value.trim() || 'Anonymous';
             const content = document.getElementById('content').value.trim();
+            const btn = document.getElementById('submit-btn');
 
             if (!content) {
                 showToast('Message cannot be empty!', 'error');
                 return;
             }
 
-            const title = encodeURIComponent(`[Message] ${author}`);
-            const body = encodeURIComponent(`**From:** ${author}\n\n${content}\n\n---\n*Submitted from [Pixel Message Board](https://${CONFIG.owner}.github.io/${CONFIG.repo}/)*`);
-            const labels = encodeURIComponent(CONFIG.issueLabel);
+            if (!API_URL) {
+                showToast('Please configure API_URL first!', 'error');
+                return;
+            }
 
-            const issueUrl = `https://github.com/${CONFIG.owner}/${CONFIG.repo}/issues/new?title=${title}&body=${body}&labels=${labels}`;
-            window.open(issueUrl, '_blank');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
 
-            showToast('Redirecting to GitHub...', 'success');
-            document.getElementById('author').value = '';
-            document.getElementById('content').value = '';
-            charCountEl.textContent = '0 / 500';
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add',
+                        author: author,
+                        content: content,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Message sent successfully!', 'success');
+                    document.getElementById('author').value = '';
+                    document.getElementById('content').value = '';
+                    charCountEl.textContent = '0 / 500';
+                    loadMessages();
+                } else {
+                    showToast(result.error || 'Failed to send', 'error');
+                }
+            } catch (err) {
+                showToast('Network error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Message';
+            }
         });
 
-        const API_BASE = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`;
-
-        // 加载留言（只读，不需要 token）
+        // 加载留言
         async function loadMessages() {
             const listEl = document.getElementById('messages-list');
             listEl.innerHTML = '<div class="loading">Loading messages...</div>';
 
+            if (!API_URL) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">[ _ ]</span>
+                        Configure API_URL to see messages
+                    </div>
+                `;
+                return;
+            }
+
             try {
-                const url = `${API_BASE}?labels=${CONFIG.issueLabel}&state=all&sort=created&direction=desc&per_page=30`;
-                const response = await fetch(url, {
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                const response = await fetch(API_URL + '?action=list', {
+                    headers: { 'Accept': 'application/json' }
                 });
 
-                if (!response.ok) {
-                    listEl.innerHTML = '<div class="empty-state"><span class="icon">[?]</span>Failed to load messages</div>';
-                    return;
-                }
+                const result = await response.json();
 
-                const issues = await response.json();
-
-                if (issues.length === 0) {
+                if (!result.success || !result.messages || result.messages.length === 0) {
                     listEl.innerHTML = `
                         <div class="empty-state">
                             <span class="icon">[ _ ]</span>
@@ -506,12 +564,10 @@
                     return;
                 }
 
-                listEl.innerHTML = issues.map((issue, idx) => {
-                    const body = issue.body || '';
-                    const fromMatch = body.match(/\*\*From:\*\* (.+)/);
-                    const author = fromMatch ? fromMatch[1] : 'Unknown';
-                    const content = body.replace(/\*\*From:\*\* .+\n\n?/, '').trim();
-                    const time = new Date(issue.created_at).toLocaleString('zh-CN', {
+                const messages = result.messages.slice(0, 50); // 最多显示50条
+
+                listEl.innerHTML = messages.map((msg, idx) => {
+                    const time = new Date(msg.timestamp).toLocaleString('zh-CN', {
                         month: '2-digit',
                         day: '2-digit',
                         hour: '2-digit',
@@ -520,12 +576,12 @@
 
                     return `
                         <div class="message-card">
-                            <span class="index-badge">#${issues.length - idx}</span>
+                            <span class="index-badge">#${messages.length - idx}</span>
                             <div class="author">
-                                ${author === 'Anonymous' ? '<span class="anonymous">Anonymous</span>' : author}
+                                ${msg.author === 'Anonymous' ? '<span class="anonymous">Anonymous</span>' : escapeHtml(msg.author)}
                                 <span class="time">${time}</span>
                             </div>
-                            <div class="content">${escapeHtml(content)}</div>
+                            <div class="content">${escapeHtml(msg.content)}</div>
                         </div>
                     `;
                 }).join('');
