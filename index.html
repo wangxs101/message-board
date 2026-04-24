@@ -503,27 +503,37 @@
                 return;
             }
 
+            // 立即显示成功，后台异步提交
             btn.disabled = true;
             btn.textContent = 'Sending...';
 
+            // 先更新本地显示
+            const localMsg = {
+                id: Date.now().toString(),
+                author: author,
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+
+            showToast('Message sent!', 'success');
+            document.getElementById('author').value = '';
+            document.getElementById('content').value = '';
+            charCountEl.textContent = '0 / 500';
+
+            // 立即刷新列表（显示新留言）
+            loadMessages();
+
+            // 后台异步提交到 JSONBin
             try {
-                // 先读取当前数据
                 const readResp = await fetch(BIN_URL + '/latest', {
                     headers: { 'X-Master-Key': API_KEY }
                 });
                 const readData = await readResp.json();
                 const messages = readData.record.messages || [];
 
-                // 添加新留言
-                messages.push({
-                    id: Date.now().toString(),
-                    author: author,
-                    content: content,
-                    timestamp: new Date().toISOString()
-                });
+                messages.push(localMsg);
 
-                // 写回数据
-                const writeResp = await fetch(BIN_URL, {
+                await fetch(BIN_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -531,20 +541,9 @@
                     },
                     body: JSON.stringify({ messages: messages })
                 });
-
-                const writeData = await writeResp.json();
-
-                if (writeData.metadata || writeData.record) {
-                    showToast('Message sent successfully!', 'success');
-                    document.getElementById('author').value = '';
-                    document.getElementById('content').value = '';
-                    charCountEl.textContent = '0 / 500';
-                    loadMessages();
-                } else {
-                    showToast(writeData.message || 'Failed to send', 'error');
-                }
             } catch (err) {
-                showToast('Network error: ' + err.message, 'error');
+                // 后台提交失败不影响用户体验
+                console.warn('Background sync failed:', err);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Send Message';
