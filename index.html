@@ -209,108 +209,6 @@
             box-shadow: none;
         }
 
-        .messages-section {
-            margin-top: 2rem;
-        }
-
-        .section-title {
-            font-size: 0.65rem;
-            color: #00d4ff;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            text-shadow: 2px 2px 0 #5b21b6;
-        }
-
-        .message-card {
-            background: #0d0521;
-            border: 3px solid #3b1f7a;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            position: relative;
-            box-shadow: 4px 4px 0 #000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message-card .author {
-            font-size: 0.55rem;
-            color: #ff6b9d;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .message-card .author::before {
-            content: '@';
-            color: #00d4ff;
-        }
-
-        .message-card .anonymous {
-            color: #666;
-        }
-
-        .message-card .time {
-            font-size: 0.45rem;
-            color: #4a3a6a;
-            margin-left: auto;
-        }
-
-        .message-card .content {
-            font-size: 0.6rem;
-            line-height: 1.8;
-            color: #e0e0ff;
-            word-break: break-word;
-        }
-
-        .message-card .index-badge {
-            position: absolute;
-            top: -8px;
-            right: 12px;
-            background: #5b21b6;
-            color: #00d4ff;
-            font-size: 0.4rem;
-            padding: 2px 8px;
-            border: 2px solid #1a0a2e;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #4a3a6a;
-            font-size: 0.6rem;
-            line-height: 2;
-        }
-
-        .empty-state .icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #00d4ff;
-            font-size: 0.6rem;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
         .toast {
             position: fixed;
             bottom: 2rem;
@@ -357,51 +255,11 @@
             color: #ff6b9d;
         }
 
-        .pixel-divider {
-            height: 4px;
-            background: repeating-linear-gradient(
-                90deg,
-                #5b21b6 0px,
-                #5b21b6 8px,
-                transparent 8px,
-                transparent 16px
-            );
-            margin: 2rem 0;
-        }
-
-        .setup-notice {
-            background: #0a0a1a;
-            border: 2px dashed #ff6b9d;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.45rem;
-            line-height: 2;
-            color: #ff6b9d;
-        }
-
-        .setup-notice a {
-            color: #00d4ff;
-        }
-
-        .setup-notice code {
-            background: #050510;
-            padding: 0.2rem 0.5rem;
-            color: #00d4ff;
-            word-break: break-all;
-        }
-
-        .message-card { display: none; }
-        .messages-section { display: none; }
-        .section-title { display: none; }
-        .empty-state { display: none; }
-        .loading { display: none; }
-        .pixel-divider { display: none; }
-
         @media (max-width: 480px) {
             body {
                 padding: 1rem 0.5rem;
             }
-            .form-box, .message-card {
+            .form-box {
                 padding: 1rem;
             }
         }
@@ -431,29 +289,16 @@
             </form>
         </div>
 
-        <div id="setup-notice" class="setup-notice" style="display:none;">
-            <strong>Setup Required:</strong> Create a free JSONBin to store messages.<br>
-            1. Go to <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> and sign up (free)<br>
-            2. Create a new Bin with initial content: <code>{"messages":[]}</code><br>
-            3. Copy your <strong>Bin ID</strong> and <strong>Master Key</strong><br>
-            4. Set them below:<br>
-            <code>const BIN_ID = 'YOUR_BIN_ID';</code><br>
-            <code>const API_KEY = 'YOUR_API_KEY';</code>
-        </div>
-
         <div class="nav-link">
-            <a href="admin.html">[ Admin Panel ]</a>
+            <a href="https://formspree.io/forms/maqaarvn" target="_blank">[ Admin Panel ]</a>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
     <script>
-        // ===== 配置区域 =====
-        // 使用 JSONBin.io 作为免费后端 (https://jsonbin.io)
-        const BIN_ID = '69eb0cdc36566621a8e76985';
-        const API_KEY = '$2a$10$kEwI/9lzszEovXG1h0T3sOXS5Y7qRTFR4S2PeP0eZzH3XCqNQRLgm';
-        const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        // Formspree endpoint
+        const FORMSPREE_URL = 'https://formspree.io/f/maqaarvn';
 
         // 生成星空背景
         function createStars() {
@@ -489,11 +334,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // 显示设置提示
-        if (!BIN_ID || !API_KEY) {
-            document.getElementById('setup-notice').style.display = 'block';
-        }
-
         // 提交留言
         document.getElementById('message-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -506,59 +346,40 @@
                 return;
             }
 
-            if (!BIN_ID || !API_KEY) {
-                showToast('Please configure BIN_ID and API_KEY first!', 'error');
-                return;
-            }
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
 
-            // 先更新本地显示
-            const localMsg = {
-                id: Date.now().toString(),
-                author: author,
-                content: content,
-                timestamp: new Date().toISOString()
-            };
+            try {
+                // 使用 fetch 提交到 Formspree（支持 CORS）
+                const resp = await fetch(FORMSPREE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        author: author,
+                        message: content
+                    })
+                });
 
-            showToast('Message sent!', 'success');
-            document.getElementById('author').value = '';
-            document.getElementById('content').value = '';
-            charCountEl.textContent = '0 / 500';
-            btn.disabled = false;
-            btn.textContent = 'Send Message';
-
-            // 立即刷新列表
-            // loadMessages(); // 已移除留言展示
-
-            // 后台异步提交到 JSONBin（不阻塞 UI）
-            (async () => {
-                try {
-                    const readResp = await fetch(BIN_URL + '/latest', {
-                        headers: { 'X-Master-Key': API_KEY }
-                    });
-                    const readData = await readResp.json();
-                    const messages = readData.record.messages || [];
-
-                    messages.push(localMsg);
-
-                    await fetch(BIN_URL, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': API_KEY
-                        },
-                        body: JSON.stringify({ messages: messages })
-                    });
-                } catch (err) {
-                    console.warn('Background sync failed:', err);
+                if (resp.ok) {
+                    showToast('Message sent!', 'success');
+                    document.getElementById('author').value = '';
+                    document.getElementById('content').value = '';
+                    charCountEl.textContent = '0 / 500';
+                } else {
+                    const data = await resp.json();
+                    throw new Error(data.error || 'Failed to send');
                 }
-            })();
+            } catch (err) {
+                console.error('Submit error:', err);
+                showToast('Failed to send: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Message';
+            }
         });
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
     </script>
 </body>
 </html>
