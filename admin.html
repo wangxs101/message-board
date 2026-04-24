@@ -49,7 +49,6 @@
             letter-spacing: 2px;
         }
 
-        /* Login Screen */
         .login-screen {
             max-width: 350px;
             margin: 3rem auto;
@@ -120,7 +119,6 @@
             display: none;
         }
 
-        /* Admin Content */
         .admin-content {
             display: none;
         }
@@ -319,7 +317,6 @@
             50% { opacity: 1; }
         }
 
-        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -452,7 +449,6 @@
             <div class="subtitle">Pixel Message Board Management Console</div>
         </div>
 
-        <!-- Login Screen -->
         <div class="login-screen" id="login-screen">
             <span class="lock-icon">[LOCK]</span>
             <h2>Authentication Required</h2>
@@ -465,7 +461,6 @@
             </div>
         </div>
 
-        <!-- Admin Content -->
         <div class="admin-content" id="admin-content">
             <div class="stats-bar">
                 <div class="stat-card">
@@ -508,7 +503,6 @@
         </div>
     </div>
 
-    <!-- Detail Modal -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <h3>Message Details</h3>
@@ -524,10 +518,6 @@
                 <div class="detail-label">Message</div>
                 <div class="detail-value" id="modal-content">-</div>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Issue URL</div>
-                <div class="detail-value" id="modal-url">-</div>
-            </div>
             <button class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
@@ -535,17 +525,18 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // Configuration
+        // Configuration - 与 index.html 保持一致
         const CONFIG = {
-            apiUrl: 'https://script.google.com/macros/s/AKfycbx3_AIrZvQPwcyTBtdJWPBFZ98hYx5FQcmicUT1OWlAVUmdOUQU0t_stcPgl-8_5zH6/exec',
-            adminPin: '104675', // 删除留言时的 PIN 码
+            binId: '',       // 替换为你的 JSONBin Bin ID
+            apiKey: '',      // 替换为你的 JSONBin Master Key
             adminPassword: 'admin123'
         };
+
+        const BIN_URL = `https://api.jsonbin.io/v3/b/${CONFIG.binId}`;
 
         let allMessages = [];
         let currentSort = 'newest';
 
-        // Login
         function handleLogin() {
             const input = document.getElementById('password-input').value;
             if (input === CONFIG.adminPassword) {
@@ -565,29 +556,25 @@
             if (e.key === 'Enter') handleLogin();
         });
 
-        // Load messages
         async function loadMessages() {
             const tableBody = document.getElementById('table-body');
             tableBody.innerHTML = '<div class="loading">Loading messages...</div>';
 
-            if (!CONFIG.apiUrl) {
-                tableBody.innerHTML = '<div class="empty-state">Please configure apiUrl in CONFIG</div>';
+            if (!CONFIG.binId || !CONFIG.apiKey) {
+                tableBody.innerHTML = '<div class="empty-state">Please configure binId and apiKey in CONFIG</div>';
                 return;
             }
 
             try {
-                const response = await fetch(CONFIG.apiUrl + '?action=list', {
-                    headers: { 'Accept': 'application/json' }
+                const response = await fetch(BIN_URL + '/latest', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Master-Key': CONFIG.apiKey
+                    }
                 });
 
-                const result = await response.json();
-
-                if (!result.success) {
-                    tableBody.innerHTML = '<div class="empty-state">Failed to load messages</div>';
-                    return;
-                }
-
-                allMessages = result.messages || [];
+                const data = await response.json();
+                allMessages = (data.record && data.record.messages) ? data.record.messages : [];
                 renderMessages();
                 updateStats();
 
@@ -602,12 +589,10 @@
 
             let messages = [...allMessages];
 
-            // Sort
             if (currentSort === 'oldest') {
                 messages.reverse();
             }
 
-            // Filter
             if (searchTerm) {
                 messages = messages.filter(msg => {
                     return (msg.content || '').toLowerCase().includes(searchTerm) ||
@@ -674,7 +659,6 @@
             document.getElementById('modal-author').textContent = data.author;
             document.getElementById('modal-time').textContent = data.time;
             document.getElementById('modal-content').textContent = data.content;
-            document.getElementById('modal-url').innerHTML = '<span style="color:#666;">N/A</span>';
             document.getElementById('modal-overlay').classList.add('visible');
         }
 
@@ -685,21 +669,36 @@
         }
 
         async function deleteMessage(id) {
-            const pin = prompt('Enter admin PIN to delete:');
-            if (!pin) return;
+            if (!confirm('Are you sure you want to delete this message?')) return;
 
             try {
-                const response = await fetch(`${CONFIG.apiUrl}?action=delete&id=${id}&pin=${pin}`, {
-                    method: 'GET'
+                // 读取当前数据
+                const readResp = await fetch(BIN_URL + '/latest', {
+                    headers: { 'X-Master-Key': CONFIG.apiKey }
+                });
+                const readData = await readResp.json();
+                let messages = readData.record.messages || [];
+
+                // 过滤掉要删除的消息
+                messages = messages.filter(m => m.id !== id);
+
+                // 写回
+                const writeResp = await fetch(BIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CONFIG.apiKey
+                    },
+                    body: JSON.stringify({ messages: messages })
                 });
 
-                const result = await response.json();
+                const writeData = await writeResp.json();
 
-                if (result.success) {
+                if (writeData.metadata || writeData.record) {
                     showToast('Message deleted', 'success');
                     loadMessages();
                 } else {
-                    showToast(result.error || 'Failed to delete', 'error');
+                    showToast('Failed to delete', 'error');
                 }
             } catch (err) {
                 showToast('Network error', 'error');
