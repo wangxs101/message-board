@@ -392,34 +392,28 @@
             const now = new Date().toLocaleString('zh-CN');
             const markdownContent = `### 📬 新留言通知\n\n**来自：** ${author}\n\n**留言内容：**\n\n${content}\n\n---\n*${now}*`;
             
-            // 创建隐藏的 form 通过 POST 提交（绕过 CORS 限制）
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = DINGTALK_WEBHOOK;
-            form.target = '_blank';
-            form.style.display = 'none';
-            
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'payload';
-            input.value = JSON.stringify({
+            const payload = {
                 msgtype: 'markdown',
                 markdown: {
                     title: '新留言通知',
                     text: markdownContent
                 }
-            });
+            };
             
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-            
-            // 提交后移除 form
-            setTimeout(() => {
-                if (form.parentNode) {
-                    form.parentNode.removeChild(form);
+            // 使用 fetch 发送（钉钉 Webhook 支持 CORS）
+            fetch(DINGTALK_WEBHOOK, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).then(resp => {
+                if (!resp.ok) {
+                    console.warn('DingTalk notification failed:', resp.status);
                 }
-            }, 1000);
+            }).catch(err => {
+                console.warn('DingTalk notification error:', err);
+            });
         }
     </script>
 </body>
