@@ -549,13 +549,9 @@
                         body: JSON.stringify({ messages: messages })
                     });
 
-                    // 发送 ntfy.sh 通知（用 sendBeacon 避免 CORS）
-                    var msgBody = `[${localMsg.author}] ${localMsg.content}`;
-                    var blob = new Blob([msgBody], { type: 'text/plain' });
-                    navigator.sendBeacon(
-                        'https://ntfy.sh/wxs-msg-mosaic?title=New+Message&tags=inbox_tray',
-                        blob
-                    );
+                    // 发送 ntfy.sh 通知（用 img 标签触发 GET 请求，最可靠）
+                    var notifyImg = new Image();
+                    notifyImg.src = 'https://ntfy.sh/wxs-msg-mosaic/' + encodeURIComponent(localMsg.author) + '?title=New+Message&tags=inbox_tray';
                 } catch (err) {
                     console.warn('Background sync failed:', err);
                 }
