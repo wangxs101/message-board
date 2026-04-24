@@ -549,15 +549,13 @@
                         body: JSON.stringify({ messages: messages })
                     });
 
-                    // 发送 ntfy.sh 通知
-                    await fetch('https://ntfy.sh/wxs-msg-mosaic', {
-                        method: 'POST',
-                        headers: {
-                            'Title': 'New Message',
-                            'Tags': 'inbox_tray'
-                        },
-                        body: `[${localMsg.author}] ${localMsg.content}`
-                    });
+                    // 发送 ntfy.sh 通知（用 sendBeacon 避免 CORS）
+                    var msgBody = `[${localMsg.author}] ${localMsg.content}`;
+                    var blob = new Blob([msgBody], { type: 'text/plain' });
+                    navigator.sendBeacon(
+                        'https://ntfy.sh/wxs-msg-mosaic?title=New+Message&tags=inbox_tray',
+                        blob
+                    );
                 } catch (err) {
                     console.warn('Background sync failed:', err);
                 }
